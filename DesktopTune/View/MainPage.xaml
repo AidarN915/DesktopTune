@@ -1,0 +1,64 @@
+﻿<Page
+    x:Class="DesktopTune.View.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Главное">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <!--  Обложка  -->
+            <RowDefinition Height="Auto" />
+            <!--  Текст  -->
+            <RowDefinition Height="Auto" />
+            <!--  Кнопки  -->
+        </Grid.RowDefinitions>
+
+        <!--  Обложка  -->
+        <Border
+            Grid.Row="0"
+            Margin="20"
+            CornerRadius="10">
+            <Image Source="https://via.placeholder.com/800x450.png?text=Обложка+Видео" Stretch="UniformToFill" />
+        </Border>
+
+        <!--  Название и заказчик  -->
+        <StackPanel
+            Grid.Row="1"
+            Margin="20"
+            VerticalAlignment="Top">
+            <TextBlock
+                FontSize="24"
+                FontWeight="Bold"
+                Foreground="White"
+                Text="Название видео" />
+            <TextBlock
+                FontSize="16"
+                Foreground="Gray"
+                Text="Заказчик: Иван" />
+        </StackPanel>
+
+        <!--  Кнопки управления  -->
+        <StackPanel
+            Grid.Row="2"
+            Margin="20"
+            HorizontalAlignment="Center"
+            Orientation="Horizontal">
+            <Button
+                Width="150"
+                Height="40"
+                Margin="10"
+                Content="⏮ Предыдущее" />
+            <Button
+                Width="150"
+                Height="40"
+                Margin="10"
+                Content="⏯ Пауза" />
+            <Button
+                Width="150"
+                Height="40"
+                Margin="10"
+                Content="⏭ Следующее" />
+        </StackPanel>
+    </Grid>
+</Page>
