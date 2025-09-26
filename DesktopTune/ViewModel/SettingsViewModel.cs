@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DesktopTune.Services;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -13,6 +14,7 @@ namespace DesktopTune.ViewModel
     public class SettingsViewModel : BaseViewModel
     {
         private UserSettings _userSettings;
+        private ChatClient _chatClient;
 
         public SettingsViewModel()
         {
@@ -34,12 +36,17 @@ namespace DesktopTune.ViewModel
         public ICommand SaveCommand { get; }
         public ICommand OpenAccessTokenLink { get; }
         public ICommand OpenClientIdLink { get; }
+
+        public void SetChatClient(ChatClient chatClient)
+        {
+            _chatClient = chatClient;
+        }
         
         private void SaveSettings()
         {
             SettingsService.SaveSettings(_userSettings);
 
-            ((MainWindow)Application.Current.MainWindow).AppVM.ChatClient.Client_Connect();
+            _chatClient.Client_Connect();
             MessageBox.Show("Настройки сохранены!", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         

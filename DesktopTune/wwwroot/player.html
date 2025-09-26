@@ -1,0 +1,116 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Local Player</title>
+    <style>
+        body {
+            background: #111;
+            color: #eee;
+            font-family: Segoe UI, Arial;
+            margin: 0;
+            padding: 10px;
+        }
+
+        .info {
+            margin-bottom: 10px;
+        }
+
+        #player {
+            width: 100%;
+            max-width: 960px;
+            height: 540px;
+            margin-bottom: 10px;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+</head>
+<body>
+    <div class="info">
+        <div id="title">—</div>
+        <div id="requested">—</div>
+    </div>
+    <div id="player"></div>
+
+    <script>
+        let connection = new signalR.HubConnectionBuilder()
+            .withUrl("/hub/player")
+            .build();
+
+        let ytPlayer = null;
+
+        connection.on("LoadTrack", obj => {
+            if (obj && obj.videoId) loadVideo(obj);
+        });
+
+        connection.on("SetVolume", value => {
+            if (ytPlayer && typeof ytPlayer.setVolume === "function") {
+                ytPlayer.setVolume(value);
+            }
+        });
+
+        connection.on("PlayPauseVideo", () => {
+            if (ytPlayer && typeof ytPlayer.pauseVideo === "function") {
+                togglePlayPause();
+            }
+        });
+
+
+        async function start() {
+            await connection.start();
+
+            const now = await connection.invoke("GetNow");
+            if (now && now.videoId) loadVideo(now);
+            else {
+                const next = await connection.invoke("Next");
+                if (next && next.videoId) loadVideo(next);
+            }
+        }
+
+        function loadVideo(obj) {
+            if (!obj || !obj.videoId) {
+                document.getElementById('title').innerText = 'Нет трека';
+                document.getElementById('requested').innerText = '';
+                if (ytPlayer) ytPlayer.stopVideo();
+                return;
+            }
+
+            document.getElementById('title').innerText = obj.title || obj.videoId;
+            document.getElementById('requested').innerText = 'Requested by: ' + (obj.requestedBy || '—');
+
+            if (!ytPlayer) {
+                ytPlayer = new YT.Player('player', {
+                    height: '540',
+                    width: '960',
+                    videoId: obj.videoId,
+                    playerVars: { autoplay: 1 },
+                    events: { 'onStateChange': onPlayerStateChange }
+                });
+            } else {
+                ytPlayer.loadVideoById({ videoId: obj.videoId, startSeconds: 0, suggestedQuality: "default" });
+            }
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.ENDED) {
+                connection.invoke("MusicEnd");
+            }
+        }
+        function togglePlayPause() {
+            if (!ytPlayer) return;
+
+            const state = ytPlayer.getPlayerState();
+            if (state === YT.PlayerState.PLAYING) {
+                ytPlayer.pauseVideo();
+            } else {
+                ytPlayer.playVideo();
+            }
+        }
+
+
+        start();
+    </script>
+
+</body>
+</html>

@@ -1,7 +1,9 @@
 ﻿using DesktopTune.Model;
+using DesktopTune.ViewModel;
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Formats.Asn1;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -12,9 +14,12 @@ namespace DesktopTune.Services
 {
     public class Player
     {
+        private ChatClient _chatClient;
+        private SettingsViewModel _settings;
         public ObservableCollection<Music> MusicQueue { get; set; } = new ObservableCollection<Music>();
         public ObservableCollection<Music> PriorityMusicQueue { get; set; } = new ObservableCollection<Music>();
-
+        public Music CurrentMusic = new Music();
+        
         private static readonly string MusicQueuePath =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "WpfYoutubePlayer", "musicQueue.json");
@@ -23,12 +28,33 @@ namespace DesktopTune.Services
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "WpfYoutubePlayer", "priorityMusicQueue.json");
 
+        public Player(ChatClient chatClient,SettingsViewModel settings) 
+        {
+            _chatClient = chatClient;
+            _settings = settings;   
+        }
+        public Music GetNext(){
+            Music m;
+            m = PriorityMusicQueue.FirstOrDefault();
+            if (m == null)
+            {
+                m = MusicQueue.FirstOrDefault();
+            }
+            CurrentMusic = m;
+            return m;
+        }
+
+        public async Task MusicEnd()
+        {
+            PriorityMusicQueue.Remove(CurrentMusic);
+            MusicQueue.Remove(CurrentMusic);
+            await SaveAsync();
+        }
         public async Task<int> OrderMusic(Music music,bool isPriority)
         {
             Music m = MusicQueue.FirstOrDefault(x => x.YoutubeLink == music.YoutubeLink);
             Music m2 = PriorityMusicQueue.FirstOrDefault(x => x.YoutubeLink == music.YoutubeLink);
-            ChatClient _chatClient = ((MainWindow)Application.Current.MainWindow).AppVM.ChatClient;
-            if(m != null || m2 != null)
+            if (m != null || m2 != null)
             {
                 _chatClient.SendMessage("@" + music.OwnerName + ",трек " + music.YoutubeLink + " уже в очереди.Баллы возвращены");
                 return 0;
@@ -39,7 +65,7 @@ namespace DesktopTune.Services
                 _chatClient.SendMessage("@" + music.OwnerName + ",трек " + music.YoutubeLink + " добавлен в приоритетную очередь");
             }
             else
-            { 
+            {
                 MusicQueue.Add(music);
                 _chatClient.SendMessage("@" + music.OwnerName + ",трек " + music.YoutubeLink + " добавлен в очередь");
             }
@@ -94,6 +120,18 @@ namespace DesktopTune.Services
             catch (Exception ex)
             {
             }
+        }
+
+        public async Task<int> GetVolume()
+        {
+            return _settings.UserSettings.Volume;
+        }
+
+        public async Task EnqueueMusic(Music m)
+        {
+            MusicQueue.Remove(m);
+            PriorityMusicQueue.Remove(m);
+            await SaveAsync();
         }
     }
 }

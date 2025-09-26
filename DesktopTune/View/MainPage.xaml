@@ -12,6 +12,10 @@
             <!--  Текст  -->
             <RowDefinition Height="Auto" />
             <!--  Кнопки  -->
+            <RowDefinition Height="Auto" />
+            <!--  Ползунок громкости  -->
+            <RowDefinition Height="Auto" />
+            <!--  Тест  -->
         </Grid.RowDefinitions>
 
         <!--  Обложка  -->
@@ -53,6 +57,7 @@
                 Width="150"
                 Height="40"
                 Margin="10"
+                Command="{Binding ToggleVideo}"
                 Content="⏯ Пауза" />
             <Button
                 Width="150"
@@ -60,5 +65,25 @@
                 Margin="10"
                 Content="⏭ Следующее" />
         </StackPanel>
+        <!--  Ползунок громкости  -->
+        <StackPanel Grid.Row="3">
+            <TextBlock Foreground="White" Text="Громкость:" />
+            <Slider
+                Grid.Row="3"
+                Maximum="100"
+                Minimum="0"
+                Value="{Binding Volume, Mode=TwoWay}" />
+        </StackPanel>
+
+        <!--  Тестовая область  -->
+        <StackPanel Grid.Row="4">
+            <TextBox x:Name="OrderTextBox" />
+            <Button
+                Command="{Binding Order}"
+                CommandParameter="{Binding Text, ElementName=OrderTextBox}"
+                Content="Заказать" />
+        </StackPanel>
+
+
     </Grid>
 </Page>

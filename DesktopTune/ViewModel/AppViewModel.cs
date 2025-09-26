@@ -1,4 +1,6 @@
 ﻿using DesktopTune.Services;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,13 +14,35 @@ namespace DesktopTune.ViewModel
         public SettingsViewModel SettingsVM { get; set; }
         public CommandViewModel CommandsVM { get; set; }
         public MainViewModel MainVM { get; set; }
+        public QueueViewModel QueueVM { get; set; }
         public ChatClient ChatClient { get; set; }
+        public Player Player { get; set; }
+        public IHubContext<PlayerHub> Hub {get;set;}
+
+        public HostService HostService { get; set; }
+
+
         public AppViewModel()
         {
             SettingsVM = new SettingsViewModel();
             CommandsVM = new CommandViewModel();
-            MainVM = new MainViewModel();
-            ChatClient = new ChatClient();
+            MainVM = new MainViewModel(SettingsVM);
+            ChatClient = new ChatClient(SettingsVM,CommandsVM);
+
+            SettingsVM.SetChatClient(ChatClient);
+
+            Player = new Player(ChatClient,SettingsVM);
+            QueueVM = new QueueViewModel(Player);
+
+            ChatClient.SetPlayer(Player);
+
+            HostService = new HostService(); 
+
+            _ = HostService.StartAsync(Player);
+            _ = Player.LoadAsync();
+
+            Hub = HostService.HostS.Services.GetRequiredService<IHubContext<PlayerHub>>();
+            MainVM.SetHub(Hub);
         }
     }
 }

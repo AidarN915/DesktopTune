@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using TwitchLib.Api.Helix;
 using TwitchLib.Client;
 using TwitchLib.Client.Events;
 using TwitchLib.Client.Models;
@@ -19,25 +20,19 @@ namespace DesktopTune.Services
         private TwitchClient _client = new TwitchClient();
         private SettingsViewModel _settingsVM;
         private CommandViewModel _commandsVM;
+        private Player _player;
 
-        public ChatClient()
+        public ChatClient(SettingsViewModel settings,CommandViewModel commands)
         {
-
+            _settingsVM = settings;
+            _commandsVM = commands;
             _client.OnConnected += Client_OnConnected;
             _client.OnConnectionError += Client_OnConnectionError;
             _client.OnChatCommandReceived += Client_OnCommandReceive;
         }
-        public void UpdateDataContext()
-        {
-            AppViewModel appVm= ((MainWindow)Application.Current.MainWindow).AppVM;
-            _settingsVM = appVm.SettingsVM;
-            _commandsVM = appVm.CommandsVM;
-        }
 
-        //Twitch IRC
         public void Client_Connect()
         {
-            UpdateDataContext();
             if (string.IsNullOrWhiteSpace(_settingsVM.UserSettings.UserName)
                 || string.IsNullOrWhiteSpace(_settingsVM.UserSettings.AccessToken)
                 || string.IsNullOrWhiteSpace(_settingsVM.UserSettings.Channel)){
@@ -51,7 +46,7 @@ namespace DesktopTune.Services
             ConnectionCredentials credentials = new ConnectionCredentials(_settingsVM.UserSettings.UserName
                                                                     , _settingsVM.UserSettings.AccessToken);
             _client.Initialize(credentials, _settingsVM.UserSettings.Channel);
-            _client.Connect();
+            //_client.Connect();
         }
         private void Client_OnConnected(object sender, OnConnectedArgs e)
         {
@@ -76,6 +71,31 @@ namespace DesktopTune.Services
             {
                 _client.SendMessage(_settingsVM.UserSettings.Channel, message);
             }
+        }
+
+        public void SetPlayer(Player player)
+        {
+            _player = player;
+        }
+
+        public async Task OrderMusic(string MusicLink)
+        {
+
+            int ampIndex = MusicLink.IndexOf('&');
+            if (ampIndex > 0)
+            {
+                MusicLink = MusicLink.Substring(0, ampIndex);
+            }
+            YouTubeService yt = new YouTubeService();
+            var res = await yt.GetVideoInfo(MusicLink);
+            Music music = new Music();
+            music.VideoId = res.Value.VideoId;
+            music.YoutubeLink = MusicLink;
+            music.Title = res.Value.Title;
+            music.OwnerName = "Test";
+            music.Thumbnail = res.Value.Thumbnail;
+
+            await _player.OrderMusic(music,false);
         }
     }
 }
