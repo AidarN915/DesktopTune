@@ -1,5 +1,6 @@
 ﻿using DesktopTune.Model;
 using DesktopTune.ViewModel;
+using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -12,13 +13,14 @@ using WpfYoutubePlayer;
 
 namespace DesktopTune.Services
 {
-    public class Player
+    public class Player : BaseViewModel
     {
         private ChatClient _chatClient;
         private SettingsViewModel _settings;
+        private IHubContext<PlayerHub> _hub;
         public ObservableCollection<Music> MusicQueue { get; set; } = new ObservableCollection<Music>();
         public ObservableCollection<Music> PriorityMusicQueue { get; set; } = new ObservableCollection<Music>();
-        public Music CurrentMusic = new Music();
+        public Music? CurrentMusic;
         
         private static readonly string MusicQueuePath =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -33,7 +35,12 @@ namespace DesktopTune.Services
             _chatClient = chatClient;
             _settings = settings;   
         }
-        public Music GetNext(){
+        public void SetHub(IHubContext<PlayerHub> hub)
+        {
+            _hub = hub;
+        }
+        public async Task<Music> GetNext(){
+            await MusicEnd();
             Music m;
             m = PriorityMusicQueue.FirstOrDefault();
             if (m == null)
@@ -46,8 +53,12 @@ namespace DesktopTune.Services
 
         public async Task MusicEnd()
         {
-            PriorityMusicQueue.Remove(CurrentMusic);
-            MusicQueue.Remove(CurrentMusic);
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                PriorityMusicQueue.Remove(CurrentMusic);
+                MusicQueue.Remove(CurrentMusic);
+                CurrentMusic = null;
+            });
             await SaveAsync();
         }
         public async Task<int> OrderMusic(Music music,bool isPriority)
@@ -69,6 +80,8 @@ namespace DesktopTune.Services
                 MusicQueue.Add(music);
                 _chatClient.SendMessage("@" + music.OwnerName + ",трек " + music.YoutubeLink + " добавлен в очередь");
             }
+
+            await _hub.Clients.All.SendAsync("NewTrackNotify",music);
             await SaveAsync();
             return 1;
         }
@@ -122,7 +135,7 @@ namespace DesktopTune.Services
             }
         }
 
-        public async Task<int> GetVolume()
+        public int GetVolume()
         {
             return _settings.UserSettings.Volume;
         }

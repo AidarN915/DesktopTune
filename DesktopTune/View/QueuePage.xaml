@@ -16,97 +16,111 @@
             <ColumnDefinition Width="0.5*" />
             <ColumnDefinition Width="0.5*" />
         </Grid.ColumnDefinitions>
-        <ItemsControl Grid.Column="0" ItemsSource="{Binding MusicQueue}">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Grid Height="60" Margin="0,5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
 
-                        <!--  Картинка  -->
-                        <Image
-                            Grid.Column="0"
-                            Width="130"
-                            Height="60"
-                            Source="{Binding Thumbnail}" />
+        <StackPanel Grid.Column="0">
+            <TextBlock
+                Grid.Column="0"
+                FontSize="18"
+                Foreground="White"
+                Text="Очередь музыки:" />
+            <ItemsControl Grid.Column="0" ItemsSource="{Binding MusicQueue}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Height="60" Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
 
-                        <!--  Текст  -->
-                        <StackPanel
-                            Grid.Column="1"
-                            Margin="5,0"
-                            Orientation="Vertical">
-                            <TextBlock
-                                FontWeight="Bold"
-                                Text="{Binding Title}"
-                                TextTrimming="CharacterEllipsis" />
-                            <TextBlock
-                                FontStyle="Italic"
-                                Foreground="Gray"
-                                Text="{Binding OwnerName}"
-                                TextTrimming="CharacterEllipsis" />
-                        </StackPanel>
+                            <!--  Картинка  -->
+                            <Image
+                                Grid.Column="0"
+                                Width="130"
+                                Height="60"
+                                Source="{Binding Thumbnail}" />
 
-                        <!--  Кнопка удалить  -->
-                        <Button
-                            Grid.Column="2"
-                            Height="20"
-                            Margin="5,0"
-                            Command="{Binding DataContext.EnqueueMusic, RelativeSource={RelativeSource AncestorType=Page}}"
-                            CommandParameter="{Binding}"
-                            Content="Удалить" />
-                    </Grid>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+                            <!--  Текст  -->
+                            <StackPanel
+                                Grid.Column="1"
+                                Margin="5,0"
+                                Orientation="Vertical">
+                                <TextBlock
+                                    FontWeight="Bold"
+                                    Text="{Binding Title}"
+                                    TextTrimming="CharacterEllipsis" />
+                                <TextBlock
+                                    FontStyle="Italic"
+                                    Foreground="Gray"
+                                    Text="{Binding OwnerName}"
+                                    TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+
+                            <!--  Кнопка удалить  -->
+                            <Button
+                                Grid.Column="2"
+                                Height="20"
+                                Margin="5,0"
+                                Command="{Binding DataContext.EnqueueMusic, RelativeSource={RelativeSource AncestorType=Page}}"
+                                CommandParameter="{Binding}"
+                                Content="Удалить" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
 
 
-        <ItemsControl Grid.Column="1" ItemsSource="{Binding PriorityMusicQueue}">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Grid Height="60" Margin="0,5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="1">
+            <TextBlock
+                FontSize="18"
+                Foreground="White"
+                Text="Очередь приоритетной музыки:" />
+            <ItemsControl ItemsSource="{Binding PriorityMusicQueue}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Height="60" Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
 
-                        <!--  Картинка  -->
-                        <Image
-                            Grid.Column="0"
-                            Width="130"
-                            Height="60"
-                            Source="{Binding Thumbnail}" />
+                            <!--  Картинка  -->
+                            <Image
+                                Grid.Column="0"
+                                Width="130"
+                                Height="60"
+                                Source="{Binding Thumbnail}" />
 
-                        <!--  Текст  -->
-                        <StackPanel
-                            Grid.Column="1"
-                            Margin="5,0"
-                            Orientation="Vertical">
-                            <TextBlock
-                                FontWeight="Bold"
-                                Text="{Binding Title}"
-                                TextTrimming="CharacterEllipsis" />
-                            <TextBlock
-                                FontStyle="Italic"
-                                Foreground="Gray"
-                                Text="{Binding OwnerName}"
-                                TextTrimming="CharacterEllipsis" />
-                        </StackPanel>
+                            <!--  Текст  -->
+                            <StackPanel
+                                Grid.Column="1"
+                                Margin="5,0"
+                                Orientation="Vertical">
+                                <TextBlock
+                                    FontWeight="Bold"
+                                    Text="{Binding Title}"
+                                    TextTrimming="CharacterEllipsis" />
+                                <TextBlock
+                                    FontStyle="Italic"
+                                    Foreground="Gray"
+                                    Text="{Binding OwnerName}"
+                                    TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
 
-                        <!--  Кнопка удалить  -->
-                        <Button
-                            Grid.Column="2"
-                            Height="20"
-                            Margin="5,0"
-                            Command="{Binding DataContext.EnqueueMusic, RelativeSource={RelativeSource AncestorType=Page}}"
-                            CommandParameter="{Binding}"
-                            Content="Удалить" />
-                    </Grid>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+                            <!--  Кнопка удалить  -->
+                            <Button
+                                Grid.Column="2"
+                                Height="20"
+                                Margin="5,0"
+                                Command="{Binding DataContext.EnqueueMusic, RelativeSource={RelativeSource AncestorType=Page}}"
+                                CommandParameter="{Binding}"
+                                Content="Удалить" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
     </Grid>
 </Page>

@@ -17,21 +17,22 @@ namespace DesktopTune.Services
             _player = player;
         }
 
-        public async Task<Music> Next()
+        public async Task<Music> GetNext()
         {
-            var next = _player.GetNext();
+            var next = await _player.GetNext();
             return next;
         }
 
-        public async Task<int> GetVolume()
+        public int GetVolume()
         {
-            var volume = await _player.GetVolume();
+            var volume = _player.GetVolume();
             return volume;
         }
 
-        public async Task MusicEnd()
+        public Music GetNow()
         {
-            await _player.MusicEnd();
+            var current = _player.CurrentMusic;
+            return current;
         }
     }
 }

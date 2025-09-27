@@ -32,6 +32,8 @@ namespace DesktopTune.ViewModel
             SettingsVM.SetChatClient(ChatClient);
 
             Player = new Player(ChatClient,SettingsVM);
+            MainVM.SetPlayer(Player);
+
             QueueVM = new QueueViewModel(Player);
 
             ChatClient.SetPlayer(Player);
@@ -43,6 +45,7 @@ namespace DesktopTune.ViewModel
 
             Hub = HostService.HostS.Services.GetRequiredService<IHubContext<PlayerHub>>();
             MainVM.SetHub(Hub);
+            Player.SetHub(Hub);
         }
     }
 }

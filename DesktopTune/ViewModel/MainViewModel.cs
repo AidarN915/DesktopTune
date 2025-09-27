@@ -20,18 +20,24 @@ namespace DesktopTune.ViewModel
         private SettingsViewModel _settings;
         private int _volume;
         private IHubContext<PlayerHub> _hub;
+        public  Player Player;
         public MainViewModel(SettingsViewModel settings)
         {
             _settings = settings;
             _volume = _settings.UserSettings.Volume;
 
             ToggleVideo = new RelayCommand(PlayPauseVideo);
+            SkipTrack = new RelayCommand(SkipMusic);
 
             Order = new RelayCommand<string>(OrderMusic);
         }
         public void SetHub(IHubContext<PlayerHub> hub)
         {
             _hub = hub;
+        }
+        public void SetPlayer(Player player)
+        {
+            Player = player;
         }
         public int Volume
         {
@@ -49,11 +55,19 @@ namespace DesktopTune.ViewModel
             }
         }
         public ICommand ToggleVideo { get; }
+        public ICommand SkipTrack { get; }
         private async void PlayPauseVideo()
         {
             if (_hub != null)
             {
                 await _hub.Clients.All.SendAsync("PlayPauseVideo");
+            }
+        }
+        private async void SkipMusic()
+        {
+            if (_hub != null)
+            {
+                await _hub.Clients.All.SendAsync("SkipTrack");
             }
         }
 

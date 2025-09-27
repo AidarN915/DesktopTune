@@ -1,37 +1,57 @@
+```html
 <!doctype html>
 <html>
 <head>
     <meta charset="utf-8">
     <title>Local Player</title>
     <style>
-        body {
-            background: #111;
-            color: #eee;
-            font-family: Segoe UI, Arial;
+        html, body {
             margin: 0;
-            padding: 10px;
-        }
-
-        .info {
-            margin-bottom: 10px;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            background: #000;
+            overflow: hidden;
+            font-family: Segoe UI, Arial, sans-serif;
         }
 
         #player {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            max-width: 960px;
-            height: 540px;
-            margin-bottom: 10px;
+            height: 100%;
+        }
+
+        .info {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            color: #fff;
+            text-shadow: 0 0 8px rgba(0,0,0,0.7);
+            font-size: 20px;
+            z-index: 10;
+        }
+
+        #title {
+            font-weight: bold;
+            font-size: 24px;
+        }
+
+        #requested {
+            font-size: 16px;
+            opacity: 0.8;
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
 </head>
 <body>
+    <div id="player"></div>
     <div class="info">
         <div id="title">—</div>
         <div id="requested">—</div>
     </div>
-    <div id="player"></div>
 
     <script>
         let connection = new signalR.HubConnectionBuilder()
@@ -40,8 +60,8 @@
 
         let ytPlayer = null;
 
-        connection.on("LoadTrack", obj => {
-            if (obj && obj.videoId) loadVideo(obj);
+        connection.on("LoadTrack", async obj => {
+            if (obj && obj.videoId) await loadVideo(obj);
         });
 
         connection.on("SetVolume", value => {
@@ -50,25 +70,36 @@
             }
         });
 
-        connection.on("PlayPauseVideo", () => {
-            if (ytPlayer && typeof ytPlayer.pauseVideo === "function") {
-                togglePlayPause();
+        connection.on("NewTrackNotify", async obj => {
+            if (!ytPlayer || ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) {
+                await loadVideo(obj);
+            }
+        });
+
+        connection.on("SkipTrack", () => {
+            if (ytPlayer && typeof ytPlayer.getDuration === "function") {
+                const duration = ytPlayer.getDuration();
+                ytPlayer.seekTo(duration, true);
             }
         });
 
 
+        connection.on("PlayPauseVideo", () => {
+            togglePlayPause();
+        });
+
         async function start() {
             await connection.start();
-
             const now = await connection.invoke("GetNow");
-            if (now && now.videoId) loadVideo(now);
-            else {
-                const next = await connection.invoke("Next");
-                if (next && next.videoId) loadVideo(next);
+            if (now && now.videoId) {
+                await loadVideo(now);
+            } else {
+                const next = await connection.invoke("GetNext");
+                if (next && next.videoId) await loadVideo(next);
             }
         }
 
-        function loadVideo(obj) {
+        async function loadVideo(obj) {
             if (!obj || !obj.videoId) {
                 document.getElementById('title').innerText = 'Нет трека';
                 document.getElementById('requested').innerText = '';
@@ -77,40 +108,54 @@
             }
 
             document.getElementById('title').innerText = obj.title || obj.videoId;
-            document.getElementById('requested').innerText = 'Requested by: ' + (obj.requestedBy || '—');
+            document.getElementById('requested').innerText = 'Requested by: ' + (obj.ownerName || '—');
 
             if (!ytPlayer) {
                 ytPlayer = new YT.Player('player', {
-                    height: '540',
-                    width: '960',
+                    width: '100%',
+                    height: '100%',
                     videoId: obj.videoId,
-                    playerVars: { autoplay: 1 },
-                    events: { 'onStateChange': onPlayerStateChange }
+                    playerVars: {
+                        autoplay: 1,       // автозапуск
+                        controls: 0,       // убрать кнопки
+                        modestbranding: 1, // убрать логотип
+                        rel: 0,            // не показывать похожие
+                        fs: 0,             // убрать fullscreen
+                        iv_load_policy: 3, // убрать аннотации
+                    },
+                    events: {
+                        'onStateChange': onPlayerStateChange
+                    }
                 });
+            await applyInitialVolume();
             } else {
                 ytPlayer.loadVideoById({ videoId: obj.videoId, startSeconds: 0, suggestedQuality: "default" });
             }
         }
 
-        function onPlayerStateChange(event) {
+        async function onPlayerStateChange(event) {
             if (event.data === YT.PlayerState.ENDED) {
-                connection.invoke("MusicEnd");
+                const next = await connection.invoke("GetNext");
+                if (next && next.videoId) await loadVideo(next);
+            }
+
+        }
+        async function applyInitialVolume() {
+            const volume = await connection.invoke("GetVolume");
+            if (ytPlayer && typeof ytPlayer.setVolume === "function") {
+                ytPlayer.setVolume(volume);
             }
         }
+
         function togglePlayPause() {
             if (!ytPlayer) return;
-
             const state = ytPlayer.getPlayerState();
-            if (state === YT.PlayerState.PLAYING) {
-                ytPlayer.pauseVideo();
-            } else {
-                ytPlayer.playVideo();
-            }
+            if (state === YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
+            else ytPlayer.playVideo();
         }
-
 
         start();
     </script>
-
 </body>
 </html>
+```
