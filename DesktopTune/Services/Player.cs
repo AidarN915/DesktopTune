@@ -5,6 +5,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.Eventing.Reader;
 using System.Formats.Asn1;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -24,6 +25,12 @@ namespace DesktopTune.Services
         public event PropertyChangedEventHandler? PropertyChanged;
         public ObservableCollection<Music> MusicQueue { get; set; } = new ObservableCollection<Music>();
         public ObservableCollection<Music> PriorityMusicQueue { get; set; } = new ObservableCollection<Music>();
+
+        //--------------------------
+        public ObservableCollection<string> BannedMusicLinks { get; set; } = new ObservableCollection<string>();
+        public ObservableCollection<string> BannedOwners { get; set; } = new ObservableCollection<string>();
+        public ObservableCollection<string> BannedAuthors { get; set; } = new ObservableCollection<string>();
+        //--------------------------
         
         private static readonly string MusicQueuePath =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -32,11 +39,25 @@ namespace DesktopTune.Services
         private static readonly string PriorityMusicQueuePath =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "WpfYoutubePlayer", "priorityMusicQueue.json");
+        
+        private static readonly string BannedMusicLinksPath =
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "WpfYoutubePlayer", "bannedLinks.json");
+        
+        private static readonly string BannedOwnersPath =
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "WpfYoutubePlayer", "bannedOwners.json");
+        
+        private static readonly string BannedAuthorsPath =
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "WpfYoutubePlayer", "bannedAuthors.json");
 
         public Player(ChatClient chatClient,SettingsViewModel settings) 
         {
             _chatClient = chatClient;
-            _settings = settings;   
+            _settings = settings;
+            _ = LoadAsync();
+            _ = LoadBansAsync();
         }
         public Music? CurrentMusic
         {
@@ -83,7 +104,24 @@ namespace DesktopTune.Services
                 _chatClient.SendMessage("@" + music.OwnerName + ",трек " + music.YoutubeLink + " уже в очереди.Баллы возвращены");
                 return false;
             }
-            if (isPriority)
+
+            if(BannedMusicLinks.Any(x => x == music.YoutubeLink))
+            {
+                _chatClient.SendMessage("@" + music.OwnerName + ", трек " + music.YoutubeLink + " запрещён на данном канале.Баллы возвращены");
+                return false;
+            }
+            else if(BannedAuthors.Any(x => x == music.Author))
+            {
+                _chatClient.SendMessage("@" + music.OwnerName + ", данный канал запрещён к заказу музыки.Баллы возвращены");
+                return false;
+            }
+            else if(BannedOwners.Any(x => x == music.OwnerName))
+            {
+                _chatClient.SendMessage("@" + music.OwnerName + ", вам запретили заказывать музыку на данном канале.Баллы возвращены");
+                return false;
+            }
+
+                if (isPriority)
             {
                 PriorityMusicQueue.Add(music);
                 _chatClient.SendMessage("@" + music.OwnerName + ",трек " + music.YoutubeLink + " добавлен в приоритетную очередь");
@@ -154,7 +192,66 @@ namespace DesktopTune.Services
             {
             }
         }
+        //-----------------------
 
+        public async Task LoadBansAsync()
+        {
+            try
+            {
+                if (File.Exists(BannedMusicLinksPath))
+                {
+                    string json = await File.ReadAllTextAsync(BannedMusicLinksPath);
+                    var loadedQueue = JsonSerializer.Deserialize<string[]>(json) ?? Array.Empty<string>();
+
+                    BannedMusicLinks.Clear();
+                    foreach (var link in loadedQueue)
+                        BannedMusicLinks.Add(link);
+                }
+                if (File.Exists(BannedOwnersPath))
+                {
+                    string json = await File.ReadAllTextAsync(BannedOwnersPath);
+                    var loadedQueue = JsonSerializer.Deserialize<string[]>(json) ?? Array.Empty<string>();
+
+                    BannedOwners.Clear();
+                    foreach (var link in loadedQueue)
+                        BannedOwners.Add(link);
+                }
+                if (File.Exists(BannedAuthorsPath))
+                {
+                    string json = await File.ReadAllTextAsync(BannedAuthorsPath);
+                    var loadedQueue = JsonSerializer.Deserialize<string[]>(json) ?? Array.Empty<string>();
+
+                    BannedAuthors.Clear();
+                    foreach (var link in loadedQueue)
+                        BannedAuthors.Add(link);
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+        }
+
+        public async Task SaveBansAsync()
+        {
+            try
+            {
+                string dir = Path.GetDirectoryName(BannedOwnersPath);
+                if (!Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
+
+                string json = JsonSerializer.Serialize(BannedOwners, new JsonSerializerOptions { WriteIndented = true });
+                string json2 = JsonSerializer.Serialize(BannedMusicLinks, new JsonSerializerOptions { WriteIndented = true });
+                string json3 = JsonSerializer.Serialize(BannedAuthors, new JsonSerializerOptions { WriteIndented = true });
+
+                await File.WriteAllTextAsync(BannedOwnersPath, json);
+                await File.WriteAllTextAsync(BannedMusicLinksPath, json2);
+                await File.WriteAllTextAsync(BannedAuthorsPath, json3);
+            }
+            catch (Exception ex)
+            {
+            }
+        }
+        //-----------------------
         public int GetVolume()
         {
             return _settings.UserSettings.Volume;
@@ -165,6 +262,40 @@ namespace DesktopTune.Services
             MusicQueue.Remove(m);
             PriorityMusicQueue.Remove(m);
             await SaveAsync();
+        }
+        public async Task BanCurrentTrack()
+        {
+            if (CurrentMusic != null)
+            {
+                BannedMusicLinks.Add(CurrentMusic.YoutubeLink);
+                await SkipMusic();
+                await SaveBansAsync();
+            }
+        }
+        public async Task BanCurrentOwner()
+        {
+            if (CurrentMusic != null)
+            {
+                BannedOwners.Add(CurrentMusic.OwnerName);
+                await SkipMusic();
+                await SaveBansAsync();
+            }
+        }
+        public async Task BanCurrentAuthor()
+        {
+            if (CurrentMusic != null)
+            {
+                BannedAuthors.Add(CurrentMusic.Author);
+                await SkipMusic();
+                await SaveBansAsync();
+            }
+        }
+        private async Task SkipMusic()
+        {
+            if (_hub != null)
+            {
+                await _hub.Clients.All.SendAsync("SkipTrack");
+            }
         }
     }
 }

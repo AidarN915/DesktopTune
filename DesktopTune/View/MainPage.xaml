@@ -13,6 +13,8 @@
             <RowDefinition Height="Auto" />
             <!--  Кнопки  -->
             <RowDefinition Height="Auto" />
+            <!--  Вам бан  -->
+            <RowDefinition Height="Auto" />
             <!--  Ползунок громкости  -->
             <RowDefinition Height="Auto" />
             <!--  Тест  -->
@@ -61,8 +63,41 @@
                 Command="{Binding SkipTrack}"
                 Content="⏭ Следующее" />
         </StackPanel>
+        <TextBlock
+            Grid.Row="3"
+            HorizontalAlignment="Center"
+            FontSize="8"
+            Foreground="White"
+            Text="Заблокировать:" />
+        <StackPanel
+            Grid.Row="3"
+            Margin="10"
+            HorizontalAlignment="Center"
+            Orientation="Horizontal">
+            <Button
+                Width="50"
+                Height="20"
+                Margin="2"
+                Command="{Binding BanLink}"
+                Content="Музыку"
+                FontSize="8" />
+            <Button
+                Width="50"
+                Height="20"
+                Margin="2"
+                Command="{Binding BanAuthor}"
+                Content="Автора"
+                FontSize="8" />
+            <Button
+                Width="50"
+                Height="20"
+                Margin="2"
+                Command="{Binding BanOwner}"
+                Content="Заказчика"
+                FontSize="8" />
+        </StackPanel>
         <!--  Ползунок громкости  -->
-        <StackPanel Grid.Row="3">
+        <StackPanel Grid.Row="4">
             <TextBlock Foreground="White" Text="Громкость:" />
             <Slider
                 Grid.Row="3"
@@ -72,7 +107,7 @@
         </StackPanel>
 
         <!--  Тестовая область  -->
-        <StackPanel Grid.Row="4">
+        <StackPanel Grid.Row="5">
             <TextBox x:Name="OrderTextBox" />
             <Button
                 Command="{Binding Order}"

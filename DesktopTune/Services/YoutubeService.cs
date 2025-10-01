@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using Microsoft.Extensions.Primitives;
+using System.Drawing;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Windows.Media.Imaging;
@@ -10,7 +11,7 @@ public class YouTubeService
 {
     private readonly YoutubeClient _client = new YoutubeClient();
 
-    public async Task<(bool IsValid, string VideoId, string Title, TimeSpan Duration, string Thumbnail)?> GetVideoInfo(string url)
+    public async Task<(bool IsValid, string VideoId, string Title, TimeSpan Duration, string Thumbnail,string AuthorName)?> GetVideoInfo(string url)
     {
         if (!IsYouTubeUrl(url))
             return null;
@@ -25,9 +26,8 @@ public class YouTubeService
 
             if (video.Duration.HasValue && video.Duration.Value > TimeSpan.FromMinutes(6))
                 return null;
-
             var thumbUrl = video.Thumbnails.GetWithHighestResolution()?.Url;
-            return (true, video.Id.Value, video.Title, video.Duration ?? TimeSpan.Zero, thumbUrl ?? "");
+            return (true, video.Id.Value, video.Title, video.Duration ?? TimeSpan.Zero, thumbUrl ?? "",video.Author.ChannelTitle ?? "");
         }
         catch(Exception ex)
         {

@@ -41,7 +41,6 @@ namespace DesktopTune.ViewModel
             HostService = new HostService(); 
 
             _ = HostService.StartAsync(Player);
-            _ = Player.LoadAsync();
 
             Hub = HostService.HostS.Services.GetRequiredService<IHubContext<PlayerHub>>();
             MainVM.SetHub(Hub);

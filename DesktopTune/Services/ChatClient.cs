@@ -152,6 +152,7 @@ namespace DesktopTune.Services
                 music.Title = res.Value.Title;
                 music.OwnerName = OwnerName;
                 music.Thumbnail = res.Value.Thumbnail;
+                music.Author = res.Value.AuthorName;
 
                 return await _player.OrderMusic(music, isPriority);
             }

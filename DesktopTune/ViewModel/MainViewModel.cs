@@ -28,6 +28,9 @@ namespace DesktopTune.ViewModel
 
             ToggleVideo = new RelayCommand(PlayPauseVideo);
             SkipTrack = new RelayCommand(SkipMusic);
+            BanLink = new RelayCommand(BanTrack);
+            BanAuthor = new RelayCommand(BanAuthorChannel);
+            BanOwner = new RelayCommand(BanMusicOwner);
 
             Order = new RelayCommand<string>(OrderMusic);
         }
@@ -60,6 +63,9 @@ namespace DesktopTune.ViewModel
         }
         public ICommand ToggleVideo { get; }
         public ICommand SkipTrack { get; }
+        public ICommand BanLink { get; }
+        public ICommand BanAuthor { get; }
+        public ICommand BanOwner { get; }
         private async void PlayPauseVideo()
         {
             if (_hub != null)
@@ -73,6 +79,18 @@ namespace DesktopTune.ViewModel
             {
                 await _hub.Clients.All.SendAsync("SkipTrack");
             }
+        }
+        private void BanTrack()
+        {
+            _ = Player.BanCurrentTrack();
+        }
+        private void BanMusicOwner()
+        {
+            _ = Player.BanCurrentOwner();
+        }
+        private void BanAuthorChannel()
+        {
+            _ = Player.BanCurrentAuthor();
         }
 
         public ICommand Order { get; }
