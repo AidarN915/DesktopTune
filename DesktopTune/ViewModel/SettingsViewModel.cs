@@ -22,6 +22,7 @@ namespace DesktopTune.ViewModel
             SaveCommand = new RelayCommand(SaveSettings);
             OpenAccessTokenLink = new RelayCommand(TwitchAccessTokenLink);
             OpenClientIdLink = new RelayCommand(TwitchClientIdLink);
+            OpenChannelIdLink = new RelayCommand(TwitchChannelIdLink);
         }
         public UserSettings UserSettings
         {
@@ -36,6 +37,7 @@ namespace DesktopTune.ViewModel
         public ICommand SaveCommand { get; }
         public ICommand OpenAccessTokenLink { get; }
         public ICommand OpenClientIdLink { get; }
+        public ICommand OpenChannelIdLink { get; }
 
         public void SetChatClient(ChatClient chatClient)
         {
@@ -58,6 +60,11 @@ namespace DesktopTune.ViewModel
         private void TwitchClientIdLink()
         {
             OpenUrl("https://dev.twitch.tv/console");
+        }
+        
+        private void TwitchChannelIdLink()
+        {
+            OpenUrl("https://www.streamweasels.com/tools/convert-twitch-username-to-user-id/");
         }
 
         private void OpenUrl(string url)

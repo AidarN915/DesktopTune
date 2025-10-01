@@ -38,6 +38,7 @@ namespace WpfYoutubePlayer
             SettingsService.SaveSettings(AppVM.SettingsVM.UserSettings);
             _ = AppVM.Player.SaveAsync();
             _ = AppVM.HostService.StopAsync();
+            _ = AppVM.ChatClient.StopEventSubAsync();
             base.OnClosed(e);
         }
         private void OpenMainPage(object sender, RoutedEventArgs e)

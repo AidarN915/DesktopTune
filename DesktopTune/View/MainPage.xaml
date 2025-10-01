@@ -23,7 +23,7 @@
             Grid.Row="0"
             Margin="20"
             CornerRadius="10">
-            <Image Source="https://via.placeholder.com/800x450.png?text=Обложка+Видео" Stretch="UniformToFill" />
+            <Image Source="{Binding Player.CurrentMusic.Thumbnail}" />
         </Border>
 
         <!--  Название и заказчик  -->
@@ -35,11 +35,11 @@
                 FontSize="24"
                 FontWeight="Bold"
                 Foreground="White"
-                Text="Название видео" />
+                Text="{Binding Player.CurrentMusic.Title}" />
             <TextBlock
                 FontSize="16"
                 Foreground="Gray"
-                Text="Заказчик: Иван" />
+                Text="{Binding Player.CurrentMusic.OwnerName}" />
         </StackPanel>
 
         <!--  Кнопки управления  -->

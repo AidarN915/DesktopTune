@@ -59,6 +59,12 @@
             .build();
 
         let ytPlayer = null;
+        let apiReady = false;
+
+        function onYouTubeIframeAPIReady() {
+            apiReady = true;
+            start(); 
+        }
 
         connection.on("LoadTrack", async obj => {
             if (obj && obj.videoId) await loadVideo(obj);
@@ -70,9 +76,13 @@
             }
         });
 
-        connection.on("NewTrackNotify", async obj => {
+        connection.on("NewTrackNotify", async () => {
             if (!ytPlayer || ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) {
-                await loadVideo(obj);
+                const now = await connection.invoke("GetNow");
+                if (!now || !now.videoId) {
+                    const next = await connection.invoke("GetNext");
+                    await loadVideo(next);
+                }
             }
         });
 
@@ -93,9 +103,10 @@
             const now = await connection.invoke("GetNow");
             if (now && now.videoId) {
                 await loadVideo(now);
-            } else {
+            }
+            else {
                 const next = await connection.invoke("GetNext");
-                if (next && next.videoId) await loadVideo(next);
+                await loadVideo(next);
             }
         }
 
@@ -108,7 +119,7 @@
             }
 
             document.getElementById('title').innerText = obj.title || obj.videoId;
-            document.getElementById('requested').innerText = 'Requested by: ' + (obj.ownerName || '—');
+            document.getElementById('requested').innerText = 'Заказан: ' + (obj.ownerName || '—');
 
             if (!ytPlayer) {
                 ytPlayer = new YT.Player('player', {
@@ -116,18 +127,21 @@
                     height: '100%',
                     videoId: obj.videoId,
                     playerVars: {
-                        autoplay: 1,       // автозапуск
-                        controls: 0,       // убрать кнопки
-                        modestbranding: 1, // убрать логотип
-                        rel: 0,            // не показывать похожие
-                        fs: 0,             // убрать fullscreen
-                        iv_load_policy: 3, // убрать аннотации
+                        autoplay: 1,
+                        controls: 0,
+                        modestbranding: 1,
+                        rel: 0,
+                        fs: 0,
+                        iv_load_policy: 3,
                     },
                     events: {
+                        'onReady': async () => {
+                            await applyInitialVolume();
+                        },
                         'onStateChange': onPlayerStateChange
                     }
+
                 });
-            await applyInitialVolume();
             } else {
                 ytPlayer.loadVideoById({ videoId: obj.videoId, startSeconds: 0, suggestedQuality: "default" });
             }
@@ -154,7 +168,6 @@
             else ytPlayer.playVideo();
         }
 
-        start();
     </script>
 </body>
 </html>

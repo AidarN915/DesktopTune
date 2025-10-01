@@ -20,7 +20,7 @@ namespace DesktopTune.ViewModel
         private SettingsViewModel _settings;
         private int _volume;
         private IHubContext<PlayerHub> _hub;
-        public  Player Player;
+        private Player _player;
         public MainViewModel(SettingsViewModel settings)
         {
             _settings = settings;
@@ -34,6 +34,10 @@ namespace DesktopTune.ViewModel
         public void SetHub(IHubContext<PlayerHub> hub)
         {
             _hub = hub;
+        }
+        public Player Player { 
+            get { return _player; } 
+            set { _player = value; OnPropertyChanged(); } 
         }
         public void SetPlayer(Player player)
         {
@@ -75,7 +79,7 @@ namespace DesktopTune.ViewModel
         private async void OrderMusic(string link)
         {
             ChatClient chat = ((MainWindow)Application.Current.MainWindow).AppVM.ChatClient;
-            await chat.OrderMusic(link);
+            await chat.OrderMusic(link,"AppTest",false);
         }
     }
 }

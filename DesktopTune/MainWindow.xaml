@@ -2,7 +2,7 @@
     x:Class="WpfYoutubePlayer.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="Кто прочитал,тот сдохнет"
+    Title="Ты думал тут что-то будет?"
     Background="#202020"
     WindowStartupLocation="CenterScreen"
     WindowState="Maximized">
@@ -17,12 +17,53 @@
 
         <!--  Навигационное меню  -->
         <StackPanel Grid.Column="0" Background="#2c2c2c">
-            <TextBlock
+
+            <StackPanel
                 Margin="10"
-                FontSize="18"
-                FontWeight="Bold"
-                Foreground="White"
-                Text="Меню" />
+                VerticalAlignment="Center"
+                Orientation="Horizontal">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    FontSize="18"
+                    FontWeight="Bold"
+                    Foreground="White"
+                    Text="Меню" />
+
+                <!--  Индикаторы справа  -->
+                <Ellipse
+                    Width="12"
+                    Height="12"
+                    Margin="10,0,0,0"
+                    VerticalAlignment="Center">
+                    <Ellipse.Style>
+                        <Style TargetType="Ellipse">
+                            <Setter Property="Fill" Value="Red" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ChatClient.IsChatConnected}" Value="True">
+                                    <Setter Property="Fill" Value="LimeGreen" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Ellipse.Style>
+                </Ellipse>
+
+                <Ellipse
+                    Width="12"
+                    Height="12"
+                    Margin="5,0,0,0"
+                    VerticalAlignment="Center">
+                    <Ellipse.Style>
+                        <Style TargetType="Ellipse">
+                            <Setter Property="Fill" Value="Red" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ChatClient.IsEventSubConnected}" Value="True">
+                                    <Setter Property="Fill" Value="LimeGreen" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Ellipse.Style>
+                </Ellipse>
+            </StackPanel>
 
             <Button
                 Height="40"

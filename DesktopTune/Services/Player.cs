@@ -3,9 +3,11 @@ using DesktopTune.ViewModel;
 using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Formats.Asn1;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
@@ -13,14 +15,15 @@ using WpfYoutubePlayer;
 
 namespace DesktopTune.Services
 {
-    public class Player : BaseViewModel
+    public class Player : INotifyPropertyChanged
     {
         private ChatClient _chatClient;
         private SettingsViewModel _settings;
         private IHubContext<PlayerHub> _hub;
+        private Music? _currentMusic;
+        public event PropertyChangedEventHandler? PropertyChanged;
         public ObservableCollection<Music> MusicQueue { get; set; } = new ObservableCollection<Music>();
         public ObservableCollection<Music> PriorityMusicQueue { get; set; } = new ObservableCollection<Music>();
-        public Music? CurrentMusic;
         
         private static readonly string MusicQueuePath =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -35,12 +38,26 @@ namespace DesktopTune.Services
             _chatClient = chatClient;
             _settings = settings;   
         }
+        public Music? CurrentMusic
+        {
+            get { 
+                return _currentMusic;
+            }
+            set { 
+                _currentMusic = value;
+                OnPropertyChanged();
+            }
+        }
+        protected void OnPropertyChanged([CallerMemberName] string name = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
         public void SetHub(IHubContext<PlayerHub> hub)
         {
             _hub = hub;
         }
-        public async Task<Music> GetNext(){
-            await MusicEnd();
+        public async Task<Music> GetNext()
+        {
             Music m;
             m = PriorityMusicQueue.FirstOrDefault();
             if (m == null)
@@ -48,27 +65,23 @@ namespace DesktopTune.Services
                 m = MusicQueue.FirstOrDefault();
             }
             CurrentMusic = m;
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                PriorityMusicQueue.Remove(_currentMusic);
+                MusicQueue.Remove(_currentMusic);
+            });
+            await SaveAsync();
             return m;
         }
 
-        public async Task MusicEnd()
-        {
-            await Application.Current.Dispatcher.InvokeAsync(() =>
-            {
-                PriorityMusicQueue.Remove(CurrentMusic);
-                MusicQueue.Remove(CurrentMusic);
-                CurrentMusic = null;
-            });
-            await SaveAsync();
-        }
-        public async Task<int> OrderMusic(Music music,bool isPriority)
+        public async Task<bool> OrderMusic(Music music,bool isPriority)
         {
             Music m = MusicQueue.FirstOrDefault(x => x.YoutubeLink == music.YoutubeLink);
             Music m2 = PriorityMusicQueue.FirstOrDefault(x => x.YoutubeLink == music.YoutubeLink);
-            if (m != null || m2 != null)
+            if (m != null || m2 != null || (CurrentMusic != null && CurrentMusic.YoutubeLink == music.YoutubeLink))
             {
                 _chatClient.SendMessage("@" + music.OwnerName + ",трек " + music.YoutubeLink + " уже в очереди.Баллы возвращены");
-                return 0;
+                return false;
             }
             if (isPriority)
             {
@@ -81,9 +94,9 @@ namespace DesktopTune.Services
                 _chatClient.SendMessage("@" + music.OwnerName + ",трек " + music.YoutubeLink + " добавлен в очередь");
             }
 
-            await _hub.Clients.All.SendAsync("NewTrackNotify",music);
+            await _hub.Clients.All.SendAsync("NewTrackNotify");
             await SaveAsync();
-            return 1;
+            return true;
         }
 
 
@@ -99,6 +112,8 @@ namespace DesktopTune.Services
                     MusicQueue.Clear();
                     foreach (var music in loadedQueue)
                         MusicQueue.Add(music);
+                    CurrentMusic = MusicQueue.FirstOrDefault();
+                    MusicQueue.Remove(CurrentMusic);
                 }
 
                 if (File.Exists(PriorityMusicQueuePath))
@@ -124,7 +139,12 @@ namespace DesktopTune.Services
                 if (!Directory.Exists(dir))
                     Directory.CreateDirectory(dir);
 
-                string json = JsonSerializer.Serialize(MusicQueue, new JsonSerializerOptions { WriteIndented = true });
+                var MusicQueueWithCurrent = new List<Music>();
+                if(CurrentMusic != null) 
+                    MusicQueueWithCurrent.Add(CurrentMusic);
+                MusicQueueWithCurrent.AddRange(new List<Music>(MusicQueue));
+
+                string json = JsonSerializer.Serialize(MusicQueueWithCurrent, new JsonSerializerOptions { WriteIndented = true });
                 string json2 = JsonSerializer.Serialize(PriorityMusicQueue, new JsonSerializerOptions { WriteIndented = true });
 
                 await File.WriteAllTextAsync(MusicQueuePath, json);
